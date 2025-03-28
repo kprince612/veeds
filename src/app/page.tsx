@@ -4,25 +4,29 @@ import { useState, useRef, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import { handleError, handleSuccess } from "../utils";
 import { ToastContainer } from "react-toastify";
-import {
-  Button,
-  NumberInput,
-  FileInput,
-  Text,
-  Paper,
-  Title,
-  Divider,
-} from "@mantine/core";
+import {Button, NumberInput, FileInput, Text, Paper, Title, Divider } from "@mantine/core";
+
+type MediaItem = {
+  id: number;
+  type: "image" | "video";
+  src: string;
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+  startTime: number;
+  endTime: number;
+};
 
 export default function Home() {
-  const [mediaList, setMediaList] = useState([]);
+  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [timer, setTimer] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const intervalRef = useRef(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleMediaUpload = (files: FileList | null) => {
     if (files && files.length > 0) {
-      const newMedia = Array.from(files).map((file) => ({
+      const newMedia: MediaItem[] = Array.from(files).map((file) => ({
         id: Date.now() + Math.random(),
         type: file.type.startsWith("video") ? "video" : "image",
         src: URL.createObjectURL(file),
@@ -43,12 +47,10 @@ export default function Home() {
 
   const handlePlay = () => {
     if (playing) {
-      clearInterval (intervalRef.current);
-      setPlaying (false);
-    }
-
-    else {
-      setPlaying (true);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      setPlaying(false);
+    } else {
+      setPlaying(true);
     }
   };
 
@@ -58,7 +60,7 @@ export default function Home() {
         setTimer((prev) => {
           const maxEnd = Math.max(...mediaList.map((m) => m.endTime || 0));
           if (prev >= maxEnd) {
-            clearInterval(intervalRef.current);
+            if (intervalRef.current) clearInterval(intervalRef.current);
             setPlaying(false);
             return prev;
           }
@@ -66,10 +68,12 @@ export default function Home() {
         });
       }, 1000);
     }
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [playing, mediaList]);
 
-  const updateMedia = (id, updatedFields) => {
+  const updateMedia = (id: number, updatedFields: Partial<MediaItem>) => {
     setMediaList((prev) =>
       prev.map((m) => (m.id === id ? { ...m, ...updatedFields } : m))
     );
@@ -104,22 +108,26 @@ export default function Home() {
             <NumberInput
               label="Width"
               value={media.width}
-              onChange={(value) => updateMedia(media.id, { width: value })}
+              onChange={(value) => updateMedia(media.id, { width: value || 0 })}
             />
             <NumberInput
               label="Height"
               value={media.height}
-              onChange={(value) => updateMedia(media.id, { height: value })}
+              onChange={(value) => updateMedia(media.id, { height: value || 0 })}
             />
             <NumberInput
               label="Start Time (s)"
               value={media.startTime}
-              onChange={(value) => updateMedia(media.id, { startTime: value })}
+              onChange={(value) =>
+                updateMedia(media.id, { startTime: value || 0 })
+              }
             />
             <NumberInput
               label="End Time (s)"
               value={media.endTime}
-              onChange={(value) => updateMedia(media.id, { endTime: value })}
+              onChange={(value) =>
+                updateMedia(media.id, { endTime: value || 0 })
+              }
             />
           </Paper>
         ))}
@@ -191,8 +199,8 @@ export default function Home() {
           {mediaList.length > 0 && (
             <>
               <Button onClick={handlePlay}>
-                { playing ? '⏸️ Pause' : '▶️ Play'}
-                </Button>
+                {playing ? "⏸️ Pause" : "▶️ Play"}
+              </Button>
               <Text>⏱ {timer}s</Text>
             </>
           )}

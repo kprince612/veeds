@@ -1,103 +1,205 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import { Rnd } from "react-rnd";
+import { handleError, handleSuccess } from "../utils";
+import { ToastContainer } from "react-toastify";
+import {
+  Button,
+  NumberInput,
+  FileInput,
+  Text,
+  Paper,
+  Title,
+  Divider,
+} from "@mantine/core";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [mediaList, setMediaList] = useState([]);
+  const [timer, setTimer] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const intervalRef = useRef(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const handleMediaUpload = (files) => {
+    if (files && files.length > 0) {
+      const newMedia = Array.from(files).map((file) => ({
+        id: Date.now() + Math.random(),
+        type: file.type.startsWith("video") ? "video" : "image",
+        src: URL.createObjectURL(file),
+        width: 200,
+        height: 150,
+        x: 50,
+        y: 50,
+        startTime: 0,
+        endTime: 5,
+      }));
+
+      setMediaList((prev) => [...prev, ...newMedia]);
+      handleSuccess("Files uploaded successfully.");
+    } else {
+      handleError("No file selected or invalid file.");
+    }
+  };
+
+  const handlePlay = () => {
+    if (playing) {
+      clearInterval (intervalRef.current);
+      setPlaying (false);
+    }
+
+    else {
+      setPlaying (true);
+    }
+  };
+
+  useEffect(() => {
+    if (playing) {
+      intervalRef.current = setInterval(() => {
+        setTimer((prev) => {
+          const maxEnd = Math.max(...mediaList.map((m) => m.endTime || 0));
+          if (prev >= maxEnd) {
+            clearInterval(intervalRef.current);
+            setPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(intervalRef.current);
+  }, [playing, mediaList]);
+
+  const updateMedia = (id, updatedFields) => {
+    setMediaList((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, ...updatedFields } : m))
+    );
+  };
+
+  return (
+    <main style={{ display: "flex", height: "100vh", background: "#f9fafb" }}>
+      <Paper
+        shadow="md"
+        p="md"
+        style={{
+          width: 300,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          borderRight: "1px solid #ddd",
+          background: "#fff",
+          overflowY: "auto",
+        }}
+      >
+        <Title order={4}>Add Images/Videos</Title>
+        <FileInput
+          label="Upload Media"
+          accept="video/*,image/*"
+          multiple
+          onChange={handleMediaUpload}
+        />
+        <Divider my="sm" />
+        {mediaList.map((media, index) => (
+          <Paper key={media.id} p="sm" shadow="xs" style={{ background: "#f8f8f8" }}>
+            <Title order={6}>Media {index + 1}</Title>
+            <NumberInput
+              label="Width"
+              value={media.width}
+              onChange={(value) => updateMedia(media.id, { width: value })}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <NumberInput
+              label="Height"
+              value={media.height}
+              onChange={(value) => updateMedia(media.id, { height: value })}
+            />
+            <NumberInput
+              label="Start Time (s)"
+              value={media.startTime}
+              onChange={(value) => updateMedia(media.id, { startTime: value })}
+            />
+            <NumberInput
+              label="End Time (s)"
+              value={media.endTime}
+              onChange={(value) => updateMedia(media.id, { endTime: value })}
+            />
+          </Paper>
+        ))}
+      </Paper>
+
+      <div
+        style={{
+          flex: 1,
+          position: "relative",
+          background: "#000000",
+          opacity: 0.9,
+        }}
+      >
+        {mediaList.map((media) => {
+          const isVisible = timer >= media.startTime && timer < media.endTime;
+          return (
+            isVisible && (
+              <Rnd
+                key={media.id}
+                size={{ width: media.width, height: media.height }}
+                position={{ x: media.x, y: media.y }}
+                onDragStop={(e, d) =>
+                  updateMedia(media.id, { x: d.x, y: d.y })
+                }
+                onResizeStop={(e, direction, ref, delta, position) =>
+                  updateMedia(media.id, {
+                    width: ref.offsetWidth,
+                    height: ref.offsetHeight,
+                    x: position.x,
+                    y: position.y,
+                  })
+                }
+                bounds="parent"
+              >
+                {media.type === "image" ? (
+                  <img
+                    src={media.src}
+                    style={{ width: "100%", height: "100%" }}
+                    alt="Uploaded"
+                  />
+                ) : (
+                  <video
+                    src={media.src}
+                    style={{ width: "100%", height: "100%" }}
+                    controls
+                  />
+                )}
+              </Rnd>
+            )
+          );
+        })}
+
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            height: "15%",
+            width: "100%",
+            background: "#ffffff",
+            padding: "10px 0",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            gap: 20,
+            borderTop: "1px solid #ddd",
+          }}
+        >
+          {mediaList.length > 0 && (
+            <>
+              <Button onClick={handlePlay}>
+                { playing ? '⏸️ Pause' : '▶️ Play'}
+                </Button>
+              <Text>⏱ {timer}s</Text>
+            </>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <ToastContainer />
+      </div>
+    </main>
   );
 }

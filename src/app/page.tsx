@@ -100,6 +100,7 @@ export default function Home() {
           accept="video/*,image/*"
           multiple
           onChange={handleMediaUpload}
+          placeholder="select file"
         />
         <Divider my="sm" />
         {mediaList.map((media, index) => (

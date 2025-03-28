@@ -24,7 +24,7 @@ export default function Home() {
   const [playing, setPlaying] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleMediaUpload = (files: FileList | null) => {
+  const handleMediaUpload = (files: File[] | null) => {
     if (files && files.length > 0) {
       const newMedia: MediaItem[] = Array.from(files).map((file) => ({
         id: Date.now() + Math.random(),

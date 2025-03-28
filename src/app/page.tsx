@@ -20,7 +20,7 @@ export default function Home() {
   const [playing, setPlaying] = useState(false);
   const intervalRef = useRef(null);
 
-  const handleMediaUpload = (files) => {
+  const handleMediaUpload = (files: FileList | null) => {
     if (files && files.length > 0) {
       const newMedia = Array.from(files).map((file) => ({
         id: Date.now() + Math.random(),

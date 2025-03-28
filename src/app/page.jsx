@@ -4,29 +4,25 @@ import { useState, useRef, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import { handleError, handleSuccess } from "../utils";
 import { ToastContainer } from "react-toastify";
-import {Button, NumberInput, FileInput, Text, Paper, Title, Divider } from "@mantine/core";
-
-type MediaItem = {
-  id: number;
-  type: "image" | "video";
-  src: string;
-  width: number;
-  height: number;
-  x: number;
-  y: number;
-  startTime: number;
-  endTime: number;
-};
+import {
+  Button,
+  NumberInput,
+  FileInput,
+  Text,
+  Paper,
+  Title,
+  Divider,
+} from "@mantine/core";
 
 export default function Home() {
-  const [mediaList, setMediaList] = useState<MediaItem[]>([]);
+  const [mediaList, setMediaList] = useState([]);
   const [timer, setTimer] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef(null);
 
-  const handleMediaUpload = (files: File[] | null) => {
+  const handleMediaUpload = (files) => {
     if (files && files.length > 0) {
-      const newMedia: MediaItem[] = Array.from(files).map((file) => ({
+      const newMedia = Array.from(files).map((file) => ({
         id: Date.now() + Math.random(),
         type: file.type.startsWith("video") ? "video" : "image",
         src: URL.createObjectURL(file),
@@ -73,11 +69,13 @@ export default function Home() {
     };
   }, [playing, mediaList]);
 
-  const updateMedia = (id: number, updatedFields: Partial<MediaItem>) => {
+  const updateMedia = (id, updatedFields) => {
     setMediaList((prev) =>
       prev.map((m) => (m.id === id ? { ...m, ...updatedFields } : m))
     );
   };
+
+  const toNumber = (value) => Number(value) || 0;
 
   return (
     <main style={{ display: "flex", height: "100vh", background: "#f9fafb" }}>
@@ -100,34 +98,43 @@ export default function Home() {
           accept="video/*,image/*"
           multiple
           onChange={handleMediaUpload}
-          placeholder="select file"
+          placeholder="Select file"
         />
         <Divider my="sm" />
         {mediaList.map((media, index) => (
-          <Paper key={media.id} p="sm" shadow="xs" style={{ background: "#f8f8f8" }}>
+          <Paper
+            key={media.id}
+            p="sm"
+            shadow="xs"
+            style={{ background: "#f8f8f8" }}
+          >
             <Title order={6}>Media {index + 1}</Title>
             <NumberInput
               label="Width"
               value={media.width}
-              onChange={(value) => updateMedia(media.id, { width: Number(value) || 0 })}
+              onChange={(value) =>
+                updateMedia(media.id, { width: toNumber(value) })
+              }
             />
             <NumberInput
               label="Height"
               value={media.height}
-              onChange={(value) => updateMedia(media.id, { height: Number(value) || 0 })}
+              onChange={(value) =>
+                updateMedia(media.id, { height: toNumber(value) })
+              }
             />
             <NumberInput
               label="Start Time (s)"
               value={media.startTime}
               onChange={(value) =>
-                updateMedia(media.id, { startTime: Number(value) || 0 })
+                updateMedia(media.id, { startTime: toNumber(value) })
               }
             />
             <NumberInput
               label="End Time (s)"
               value={media.endTime}
               onChange={(value) =>
-                updateMedia(media.id, { endTime: Number(value) || 0 })
+                updateMedia(media.id, { endTime: toNumber(value) })
               }
             />
           </Paper>

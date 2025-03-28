@@ -108,25 +108,25 @@ export default function Home() {
             <NumberInput
               label="Width"
               value={media.width}
-              onChange={(value) => updateMedia(media.id, { width: value || 0 })}
+              onChange={(value) => updateMedia(media.id, { width: Number(value) || 0 })}
             />
             <NumberInput
               label="Height"
               value={media.height}
-              onChange={(value) => updateMedia(media.id, { height: value || 0 })}
+              onChange={(value) => updateMedia(media.id, { height: Number(value) || 0 })}
             />
             <NumberInput
               label="Start Time (s)"
               value={media.startTime}
               onChange={(value) =>
-                updateMedia(media.id, { startTime: value || 0 })
+                updateMedia(media.id, { startTime: Number(value) || 0 })
               }
             />
             <NumberInput
               label="End Time (s)"
               value={media.endTime}
               onChange={(value) =>
-                updateMedia(media.id, { endTime: value || 0 })
+                updateMedia(media.id, { endTime: Number(value) || 0 })
               }
             />
           </Paper>
